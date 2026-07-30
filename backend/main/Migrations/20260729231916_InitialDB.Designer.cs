@@ -11,7 +11,7 @@ using main.Config;
 
 namespace main.Migrations
 {
-    [DbContext(typeof(Db))]
+    [DbContext(typeof(AppDb))]
     [Migration("20260729231916_InitialDB")]
     partial class InitialDB
     {

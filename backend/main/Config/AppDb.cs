@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace main.Config
 {
-    public class Db(DbContextOptions<Db> options) : DbContext(options)
+    public class AppDb(DbContextOptions<AppDb> options) : DbContext(options)
     {
         public DbSet<Product> Products { get; set; }
         public DbSet<Cart> Carts { get; set; }
@@ -19,6 +19,11 @@ namespace main.Config
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AppUser>().HasMany(u => u.FavoriteProducts).WithMany();
+            modelBuilder
+                .Entity<RefreshToken>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId);
         }
     }
 }

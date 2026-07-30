@@ -10,14 +10,14 @@ using main.Config;
 
 namespace main.Migrations
 {
-    [DbContext(typeof(Db))]
+    [DbContext(typeof(AppDb))]
     partial class DbModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.4")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -39,6 +39,47 @@ namespace main.Migrations
                         .HasDatabaseName("ix_app_user_product_favorite_products_id");
 
                     b.ToTable("app_user_product", (string)null);
+                });
+
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasColumnType("text")
+                        .HasColumnName("replaced_by_token");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("token");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refresh_token");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_refresh_token_user_id");
+
+                    b.ToTable("refresh_token", (string)null);
                 });
 
             modelBuilder.Entity("main.Entity.AppUser", b =>
@@ -151,6 +192,18 @@ namespace main.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_app_user_product_products_favorite_products_id");
+                });
+
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.HasOne("main.Entity.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_token_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("main.Entity.Cart", b =>

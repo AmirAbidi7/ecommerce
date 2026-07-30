@@ -1,5 +1,4 @@
 using System.Text;
-using EFCore.NamingConventions;
 using main.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddDbContext<Db>(
+builder.Services.AddDbContext<AppDb>(
     (sp, options) =>
     {
         options
@@ -37,7 +36,7 @@ builder
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
             ),
         };
     });
@@ -45,10 +44,10 @@ builder
 var app = builder.Build();
 
 await using var scope = app.Services.CreateAsyncScope();
-var db = scope.ServiceProvider.GetRequiredService<Db>();
+var db = scope.ServiceProvider.GetRequiredService<AppDb>();
 var canConnect = await db.Database.CanConnectAsync();
 
-// await db.Database.MigrateAsync();
+await db.Database.MigrateAsync();
 app.Logger.LogInformation("Can connect to database: {CanConnect}", canConnect);
 
 // Configure the HTTP request pipeline.
