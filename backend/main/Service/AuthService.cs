@@ -1,6 +1,7 @@
 using main.Config;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 public class AuthService(AppDb db, JwtService jwtService)
 {
@@ -36,7 +37,7 @@ public class AuthService(AppDb db, JwtService jwtService)
 
     public async Task<AuthResult> IssueAuthResultAsync(AppUser user)
     {
-        var token = jwtService.GenerateToken(user.FirstName);
+        var token = jwtService.GenerateToken(user);
         var refreshToken = await db.RefreshTokens.FirstAsync(token => token.UserId == user.Id);
 
         if (refreshToken == null || !refreshToken.IsActive)
@@ -60,5 +61,14 @@ public class AuthService(AppDb db, JwtService jwtService)
             await db.SaveChangesAsync();
         }
         return AuthResult.Success(new UserInfo(user), token, refreshToken!.Token);
+    }
+
+    public async Task<AuthResult> Refresh(string refreshToken)
+    {
+        var token = await db.RefreshTokens.FirstAsync(token => token.Token == refreshToken);
+
+        var user = await db.Users.FirstAsync(user => user.Id == token.UserId);
+
+        return await IssueAuthResultAsync(user);
     }
 }
