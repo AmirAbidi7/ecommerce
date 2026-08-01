@@ -9,6 +9,7 @@ namespace main.Config
         public DbSet<Product> Products { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<AppUser> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,6 +20,7 @@ namespace main.Config
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AppUser>().HasMany(u => u.FavoriteProducts).WithMany();
+
             modelBuilder
                 .Entity<RefreshToken>()
                 .HasOne(t => t.User)
