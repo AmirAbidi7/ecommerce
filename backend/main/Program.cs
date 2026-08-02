@@ -9,11 +9,16 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+DotNetEnv.Env.Load(Path.Combine(builder.Environment.ContentRootPath, ".env"));
+builder.Configuration.AddEnvironmentVariables();
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddLogging();
+builder.Services.AddSingleton<JwtService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddDbContext<AppDb>(
     (sp, options) =>
     {

@@ -1,16 +1,15 @@
 using main.Config;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 public class AuthService(AppDb db, JwtService jwtService)
 {
     public async Task<AuthResult?> RegisterAsync(RegisterUser registerUser)
     {
-        var existingUser = await db.Users.FirstAsync(user => user.Email == registerUser.Email);
-        if (existingUser != null)
+        var existingUser = await db.Users.AnyAsync(user => user.Email == registerUser.Email);
+        if (existingUser)
         {
-            return AuthResult.Failure("Email already exists");
+            throw new InvalidOperationException("User with that email already exists!");
         }
         var userToAdd = registerUser.ToAppUser();
         userToAdd.Password = BCrypt.Net.BCrypt.HashPassword(userToAdd.Password);
@@ -23,14 +22,10 @@ public class AuthService(AppDb db, JwtService jwtService)
 
     public async Task<AuthResult> LoginAsync(LoginUser loginUser)
     {
-        var user = await db.Users.FirstAsync(u => u.Email == loginUser.Email);
-        if (user == null)
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == loginUser.Email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password))
         {
-            return AuthResult.Failure("Wrong password or Email");
-        }
-        if (BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password))
-        {
-            return AuthResult.Failure("Wrong password or Email");
+            throw new UnauthorizedAccessException("Unauthorized");
         }
         return await IssueAuthResultAsync(user);
     }
@@ -38,7 +33,9 @@ public class AuthService(AppDb db, JwtService jwtService)
     public async Task<AuthResult> IssueAuthResultAsync(AppUser user)
     {
         var token = jwtService.GenerateToken(user);
-        var refreshToken = await db.RefreshTokens.FirstAsync(token => token.UserId == user.Id);
+        var refreshToken = await db.RefreshTokens.FirstOrDefaultAsync(token =>
+            token.UserId == user.Id
+        );
 
         if (refreshToken == null || !refreshToken.IsActive)
         {

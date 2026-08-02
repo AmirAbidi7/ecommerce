@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 public class AuthController(AuthService authService) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("register")]
     public async Task<ActionResult<AuthResult>> Register([FromBody] RegisterUser user)
     {
         var authResult = await authService.RegisterAsync(user);
@@ -12,7 +12,7 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(authResult);
     }
 
-    [HttpPost]
+    [HttpPost("login")]
     public async Task<ActionResult<AuthResult>> Login([FromBody] LoginUser user)
     {
         var authResult = await authService.LoginAsync(user);
