@@ -20,6 +20,22 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(authResult);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<AuthResult>> Refresh()
+    {
+        var token = Request.Cookies.First(cookie => cookie.Value == "refreshToken");
+        var authResult = authService.Refresh(token.Value);
+
+        return Ok(authResult);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult> Logout()
+    {
+        Response.Cookies.Delete("refreshToken");
+        return Ok();
+    }
+
     private void SetRefreshToken(string refreshToken)
     {
         var cookieOptions = new CookieOptions
