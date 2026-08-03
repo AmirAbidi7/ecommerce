@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using main.entity;
+using main.Entity;
 using main.Enum;
 
 namespace main.Entity

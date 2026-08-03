@@ -1,15 +1,18 @@
 using main.Config;
+using main.dto.auth;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
+
+namespace main.Service;
 
 public class AuthService(AppDb db, JwtService jwtService)
 {
     public async Task<AuthResult?> RegisterAsync(RegisterUser registerUser)
     {
-        var existingUser = await db.Users.FirstAsync(user => user.Email == registerUser.Email);
-        if (existingUser != null)
+        var existingUser = await db.Users.AnyAsync(user => user.Email == registerUser.Email);
+        if (existingUser)
         {
-            return AuthResult.Failure("Email already exists");
+            throw new InvalidOperationException("User with that email already exists!");
         }
         var userToAdd = registerUser.ToAppUser();
         userToAdd.Password = BCrypt.Net.BCrypt.HashPassword(userToAdd.Password);
@@ -22,43 +25,44 @@ public class AuthService(AppDb db, JwtService jwtService)
 
     public async Task<AuthResult> LoginAsync(LoginUser loginUser)
     {
-        var user = await db.Users.FirstAsync(u => u.Email == loginUser.Email);
-        if (user == null)
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == loginUser.Email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password))
         {
-            return AuthResult.Failure("Wrong password or Email");
-        }
-        if (BCrypt.Net.BCrypt.Verify(loginUser.Password, user.Password))
-        {
-            return AuthResult.Failure("Wrong password or Email");
+            throw new UnauthorizedAccessException("Unauthorized");
         }
         return await IssueAuthResultAsync(user);
     }
 
     public async Task<AuthResult> IssueAuthResultAsync(AppUser user)
     {
-        var token = jwtService.GenerateToken(user.FirstName);
-        var refreshToken = await db.RefreshTokens.FirstAsync(token => token.UserId == user.Id);
+        var token = jwtService.GenerateToken(user);
 
-        if (refreshToken == null || !refreshToken.IsActive)
+        var refreshToken = new RefreshToken
         {
-            refreshToken = new RefreshToken
-            {
-                Token = jwtService.GenerateRefreshToken(),
-                UserId = user.Id!.Value,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-            };
-            await db.RefreshTokens.AddAsync(
-                new RefreshToken
-                {
-                    Token = jwtService.GenerateRefreshToken(),
-                    UserId = user.Id!.Value,
-                    CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddDays(7),
-                }
-            );
-            await db.SaveChangesAsync();
-        }
+            Token = jwtService.GenerateRefreshToken(),
+            UserId = user.Id!.Value,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+        };
+        await db.RefreshTokens.AddAsync(refreshToken);
+        await db.SaveChangesAsync();
         return AuthResult.Success(new UserInfo(user), token, refreshToken!.Token);
+    }
+
+    public async Task<AuthResult> Refresh(string refreshToken)
+    {
+        var token = await db.RefreshTokens.FirstOrDefaultAsync(token =>
+            token.Token == refreshToken
+        );
+        if (token?.IsActive != true)
+        {
+            throw new UnauthorizedAccessException("Token not found");
+        }
+
+        var user = await db.Users.FirstAsync(user => user.Id == token.UserId);
+        token.RevokedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return await IssueAuthResultAsync(user);
     }
 }
