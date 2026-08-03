@@ -24,11 +24,15 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(authResult);
     }
 
-    [HttpGet]
+    [HttpGet("refresh")]
     public async Task<ActionResult<AuthResult>> Refresh()
     {
-        var token = Request.Cookies.First(cookie => cookie.Value == "refreshToken");
-        var authResult = authService.Refresh(token.Value);
+        if (!Request.Cookies.TryGetValue("refreshToken", out var token))
+        {
+            return Unauthorized("Token not set");
+        }
+        var authResult = await authService.Refresh(token);
+        SetRefreshToken(authResult.RefreshToken!);
 
         return Ok(authResult);
     }

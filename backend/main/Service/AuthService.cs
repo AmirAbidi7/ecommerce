@@ -36,30 +36,32 @@ public class AuthService(AppDb db, JwtService jwtService)
     public async Task<AuthResult> IssueAuthResultAsync(AppUser user)
     {
         var token = jwtService.GenerateToken(user);
-        var refreshToken = await db.RefreshTokens.FirstOrDefaultAsync(token =>
-            token.UserId == user.Id
-        );
 
-        if (refreshToken == null || !refreshToken.IsActive)
+        var refreshToken = new RefreshToken
         {
-            refreshToken = new RefreshToken
-            {
-                Token = jwtService.GenerateRefreshToken(),
-                UserId = user.Id!.Value,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-            };
-            await db.RefreshTokens.AddAsync(refreshToken);
-            await db.SaveChangesAsync();
-        }
+            Token = jwtService.GenerateRefreshToken(),
+            UserId = user.Id!.Value,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+        };
+        await db.RefreshTokens.AddAsync(refreshToken);
+        await db.SaveChangesAsync();
         return AuthResult.Success(new UserInfo(user), token, refreshToken!.Token);
     }
 
     public async Task<AuthResult> Refresh(string refreshToken)
     {
-        var token = await db.RefreshTokens.FirstAsync(token => token.Token == refreshToken);
+        var token = await db.RefreshTokens.FirstOrDefaultAsync(token =>
+            token.Token == refreshToken
+        );
+        if (token?.IsActive != true)
+        {
+            throw new UnauthorizedAccessException("Token not found");
+        }
 
         var user = await db.Users.FirstAsync(user => user.Id == token.UserId);
+        token.RevokedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
 
         return await IssueAuthResultAsync(user);
     }
