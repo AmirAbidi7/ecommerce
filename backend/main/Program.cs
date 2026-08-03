@@ -1,9 +1,8 @@
-using System.Security.Claims;
 using System.Text;
 using main.Config;
-using main.Entity;
+using main.Middleware;
+using main.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 

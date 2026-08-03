@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using main.Entity;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+
+namespace main.dto.auth;
 
 public record RegisterUser(
     [EmailAddress] string Email,

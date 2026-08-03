@@ -5,6 +5,8 @@ using System.Text;
 using main.Entity;
 using Microsoft.IdentityModel.Tokens;
 
+namespace main.Service;
+
 public class JwtService(IConfiguration config)
 {
     private readonly IConfiguration _config = config;

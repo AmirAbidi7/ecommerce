@@ -1,4 +1,3 @@
-using main.entity;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +24,8 @@ namespace main.Config
                 .Entity<RefreshToken>()
                 .HasOne(t => t.User)
                 .WithMany()
-                .HasForeignKey(t => t.UserId);
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

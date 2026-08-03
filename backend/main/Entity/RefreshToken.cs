@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using main.Entity;
 
+namespace main.Entity;
+
 public class RefreshToken
 {
     [Key]

@@ -1,6 +1,9 @@
 using main.Config;
+using main.dto.auth;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
+
+namespace main.Service;
 
 public class AuthService(AppDb db, JwtService jwtService)
 {
@@ -46,15 +49,7 @@ public class AuthService(AppDb db, JwtService jwtService)
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
             };
-            await db.RefreshTokens.AddAsync(
-                new RefreshToken
-                {
-                    Token = jwtService.GenerateRefreshToken(),
-                    UserId = user.Id!.Value,
-                    CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddDays(7),
-                }
-            );
+            await db.RefreshTokens.AddAsync(refreshToken);
             await db.SaveChangesAsync();
         }
         return AuthResult.Success(new UserInfo(user), token, refreshToken!.Token);

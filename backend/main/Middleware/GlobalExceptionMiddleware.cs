@@ -1,3 +1,5 @@
+namespace main.Middleware;
+
 public class GlobalExceptionMiddleware(
     RequestDelegate _next,
     ILogger<GlobalExceptionMiddleware> _logger

@@ -1,4 +1,8 @@
+using main.dto.auth;
+using main.Service;
 using Microsoft.AspNetCore.Mvc;
+
+namespace main.Controller;
 
 [ApiController]
 [Route("api/[controller]")]

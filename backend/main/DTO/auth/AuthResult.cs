@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using main.Entity;
 
+namespace main.dto.auth;
+
 public class AuthResult
 {
     public bool IsSuccess { get; }

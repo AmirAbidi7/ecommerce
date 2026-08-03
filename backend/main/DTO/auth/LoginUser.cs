@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using main.Entity;
+
+namespace main.dto.auth;
 
 public record LoginUser([EmailAddress] string Email, string Password) { }
