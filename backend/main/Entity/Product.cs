@@ -12,5 +12,8 @@ public class Product
     public required int Stock { get; set; }
 
     public required float Price { get; set; }
-    public required string imageUrl { get; set; }
+    public required string ImageUrl { get; set; }
+    public required string Description { get; set; }
+
+    public required DateTime CreatedAt { get; set; }
 }
