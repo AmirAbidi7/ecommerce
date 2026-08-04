@@ -37,21 +37,26 @@ namespace main.Service
                 ?? throw new KeyNotFoundException("Product does not exist!");
             user.FavoriteProducts!.Add(product);
             await db.SaveChangesAsync();
-        a}
+        }
 
-        public async Task UnfavoriteProduct(Guid productId, Guid userId) {
-          var exists = await db
-            .Users.Where(u => u.Id == userId)
-            .SelectMany(u => u.FavoriteProducts)
-            .AnyAsync(p => p.Id == productId);
-          if (!exists) {
-            throw new InvalidOperationException("Product already not favorited");
-          }
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new KeyNotFoundException("User not found");
-            var product = await db.Products.FirstOrDefaultAsync(p => p.Id == productId) ?? throw new KeyNotFoundException("Product not found");
+        public async Task UnfavoriteProduct(Guid productId, Guid userId)
+        {
+            var exists = await db
+                .Users.Where(u => u.Id == userId)
+                .SelectMany(u => u.FavoriteProducts)
+                .AnyAsync(p => p.Id == productId);
+            if (!exists)
+            {
+                throw new InvalidOperationException("Product already not favorited");
+            }
+            var user =
+                await db.Users.FirstOrDefaultAsync(u => u.Id == userId)
+                ?? throw new KeyNotFoundException("User not found");
+            var product =
+                await db.Products.FirstOrDefaultAsync(p => p.Id == productId)
+                ?? throw new KeyNotFoundException("Product not found");
             user.FavoriteProducts!.Remove(product);
             await db.SaveChangesAsync();
-
         }
     }
 }
