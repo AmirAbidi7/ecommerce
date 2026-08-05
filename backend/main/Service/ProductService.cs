@@ -6,9 +6,9 @@ namespace main.Service
 {
     public class ProductService(AppDb db)
     {
-        public async Task<ICollection<ProductList>> GetProductsAsync()
+        public async Task<ICollection<ProductOverview>> GetProductsAsync()
         {
-            return await db.Products.Select(p => new ProductList(p)).ToListAsync();
+            return await db.Products.Select(p => new ProductOverview(p)).ToListAsync();
         }
 
         public async Task<ProdutDetails> GetProductAsync(Guid productId)

@@ -2,7 +2,6 @@ using System.Security.Claims;
 using main.DTO.product;
 using main.Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace main.Controller;
@@ -12,7 +11,7 @@ namespace main.Controller;
 public class ProductController(ProductService productService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ICollection<ProductList>>> GetProducts()
+    public async Task<ActionResult<ICollection<ProductOverview>>> GetProducts()
     {
         var productList = await productService.GetProductsAsync();
 

@@ -2,8 +2,8 @@ using main.Entity;
 
 namespace main.DTO.product;
 
-public record ProductList(Guid Id, string Name, float Price, string ImageUrl)
+public record ProductOverview(Guid Id, string Name, float Price, string ImageUrl)
 {
-    public ProductList(Product product)
+    public ProductOverview(Product product)
         : this(product.Id, product.Name, product.Price, product.ImageUrl) { }
-};
+}

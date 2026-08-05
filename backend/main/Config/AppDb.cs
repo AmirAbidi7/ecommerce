@@ -1,3 +1,4 @@
+using main.DTO.cart;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,11 @@ namespace main.Config
                 .Property(p => p.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .ValueGeneratedOnAdd();
+            modelBuilder
+                .Entity<Cart>()
+                .HasMany(cart => cart.Products)
+                .WithMany()
+                .UsingEntity<CartItem>();
         }
     }
 }
