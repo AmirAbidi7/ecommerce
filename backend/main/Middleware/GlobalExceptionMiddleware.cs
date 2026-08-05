@@ -22,7 +22,7 @@ public class GlobalExceptionMiddleware(
     {
         context.Response.ContentType = "application/json";
 
-        var StatusCode = exception switch
+        context.Response.StatusCode = exception switch
         {
             ArgumentException => StatusCodes.Status400BadRequest,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
@@ -30,7 +30,6 @@ public class GlobalExceptionMiddleware(
             InvalidOperationException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError,
         };
-        context.Response.StatusCode = StatusCode;
         var response = new { error = new { message = exception.Message } };
         await context.Response.WriteAsJsonAsync(response);
     }

@@ -8,7 +8,7 @@ namespace main.Entity
     public class Cart
     {
         [Key]
-        public required Guid Id { get; set; }
+        public Guid Id { get; set; }
 
         public required CartStatus Status { get; set; } = CartStatus.CREATED;
 
