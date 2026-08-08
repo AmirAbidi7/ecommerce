@@ -10,4 +10,7 @@ public class CartItem
     public Product Product { get; set; }
     public int ProductAmount { get; set; }
     public Guid CartId { get; set; }
+
+    [ForeignKey(nameof(ProductId))]
+    public Cart Cart { get; set; }
 }

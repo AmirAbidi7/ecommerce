@@ -3,6 +3,7 @@ using main.DTO.cart;
 using main.Entity;
 using main.Enum;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace main.Service;
 
@@ -58,5 +59,49 @@ public class CartService(AppDb db)
         }
         await db.SaveChangesAsync();
         return new CartOverView(cartId, cartItems);
+    }
+
+    public async Task<CartOverView> RemoveFromCart(Guid productId, Guid cartId, int productAmount)
+    {
+        var cart =
+            await db
+                .Carts.Include(cart => cart.Products)
+                .FirstOrDefaultAsync(cart => cart.Id == cartId)
+            ?? throw new KeyNotFoundException("Cart not found");
+        ICollection<CartItem> cartItems = await db
+            .CartItems.Where(ci => ci.CartId == cartId)
+            .Include(ci => ci.Product)
+            .ToListAsync();
+        var item = await db.CartItems.FirstOrDefaultAsync(ci =>
+            ci.CartId == cartId && ci.ProductId == productId
+        );
+        if (item == null)
+        {
+            throw new InvalidOperationException("proudct doesn't exist");
+        }
+        else
+        {
+            item.ProductAmount -= productAmount;
+            if (item.ProductAmount <= 0)
+            {
+                db.CartItems.Remove(item);
+            }
+        }
+        await db.SaveChangesAsync();
+
+        return new CartOverView(cartId, cartItems);
+    }
+
+    public async Task<ICollection<CartOverView>> GetCarts(Guid userId)
+    {
+        ICollection<CartItem> items = await db
+            .CartItems.Where(ci => ci.Cart.UserId == userId)
+            .Include(ci => ci.Product)
+            .ToListAsync();
+        if (items == null)
+        {
+            return new List<CartOverView>([]);
+        }
+        return [.. items.GroupBy(ci => ci.CartId).Select(g => new CartOverView(g.Key, g.ToList()))];
     }
 }
