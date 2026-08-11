@@ -2,12 +2,13 @@ using main.Config;
 using main.DTO.cart;
 using main.Entity;
 using main.Enum;
+using main.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace main.Service;
 
-public class CartService(AppDb db)
+public class CartService(AppDb db, ProducerService producerService)
 {
     public async Task<CartOverView> CreateCart(Guid userId)
     {
@@ -144,5 +145,16 @@ public class CartService(AppDb db)
         }
         cart.Status = CartStatus.PAID;
         await db.SaveChangesAsync();
+        var items = await db
+            .CartItems.Where(items => items.CartId == cartId)
+            .Include(items => items.Product)
+            .ToListAsync();
+        var user =
+            await db.Users.FirstOrDefaultAsync(user => user.Id == cart.UserId)
+            ?? throw new KeyNotFoundException("User not found !");
+        producerService.ProduceAsync(
+            "payment-completed",
+            new PurchaseEvent(user.Email, new CartOverView(cartId, items))
+        );
     }
 }

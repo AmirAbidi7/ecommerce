@@ -55,7 +55,7 @@ await using var scope = app.Services.CreateAsyncScope();
 var db = scope.ServiceProvider.GetRequiredService<AppDb>();
 var canConnect = await db.Database.CanConnectAsync();
 
-await db.Database.MigrateAsync();
+// await db.Database.MigrateAsync();
 app.Logger.LogInformation("Can connect to database: {CanConnect}", canConnect);
 
 // Configure the HTTP request pipeline.
