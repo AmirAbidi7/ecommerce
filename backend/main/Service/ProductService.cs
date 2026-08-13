@@ -13,9 +13,8 @@ namespace main.Service
 
         public async Task<ProdutDetails> GetProductAsync(Guid productId)
         {
-            return await db
-                .Products.Select(p => new ProdutDetails(p))
-                .FirstAsync(p => p.Id == productId);
+            var product = await db.Products.FirstAsync(p => p.Id == productId);
+            return new ProdutDetails(product);
         }
 
         public async Task FavoriteProduct(Guid productId, Guid userId)
@@ -35,7 +34,8 @@ namespace main.Service
             var product =
                 await db.Products.FirstOrDefaultAsync(p => p.Id == productId)
                 ?? throw new KeyNotFoundException("Product does not exist!");
-            user.FavoriteProducts!.Add(product);
+            user.FavoriteProducts ??= [];
+            user.FavoriteProducts.Add(product);
             await db.SaveChangesAsync();
         }
 
@@ -55,7 +55,8 @@ namespace main.Service
             var product =
                 await db.Products.FirstOrDefaultAsync(p => p.Id == productId)
                 ?? throw new KeyNotFoundException("Product not found");
-            user.FavoriteProducts!.Remove(product);
+            user.FavoriteProducts ??= [];
+            user.FavoriteProducts.Remove(product);
             await db.SaveChangesAsync();
         }
     }
