@@ -15,6 +15,7 @@ public class JwtService(IConfiguration config)
     {
         var claims = new[]
         {
+            new Claim("UserId", user.Id!.Value.ToString()),
             new Claim("FirstName", user.FirstName),
             new Claim("Email", user.Email),
         };

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using main.Config;
@@ -11,9 +12,11 @@ using main.Config;
 namespace main.Migrations
 {
     [DbContext(typeof(AppDb))]
-    partial class DbModelSnapshot : ModelSnapshot
+    [Migration("20260810224543_ProductColumnToCart")]
+    partial class ProductColumnToCart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,23 +103,20 @@ namespace main.Migrations
 
             modelBuilder.Entity("main.Entity.CartItem", b =>
                 {
-                    b.Property<Guid>("CartId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("cart_id");
-
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid")
                         .HasColumnName("product_id");
+
+                    b.Property<Guid>("CartId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cart_id");
 
                     b.Property<int>("ProductAmount")
                         .HasColumnType("integer")
                         .HasColumnName("product_amount");
 
-                    b.HasKey("CartId", "ProductId")
+                    b.HasKey("ProductId")
                         .HasName("pk_cart_items");
-
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_cart_items_product_id");
 
                     b.ToTable("cart_items", (string)null);
                 });
@@ -237,10 +237,10 @@ namespace main.Migrations
                 {
                     b.HasOne("main.Entity.Cart", "Cart")
                         .WithMany()
-                        .HasForeignKey("CartId")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_cart_items_carts_cart_id");
+                        .HasConstraintName("fk_cart_items_carts_product_id");
 
                     b.HasOne("main.Entity.Product", "Product")
                         .WithMany()

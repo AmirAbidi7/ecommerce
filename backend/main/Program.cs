@@ -17,7 +17,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddLogging();
 builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<IProducerService, ProducerService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<CartService>();
 builder.Services.AddDbContext<AppDb>(
     (sp, options) =>
     {
@@ -55,7 +58,7 @@ await using var scope = app.Services.CreateAsyncScope();
 var db = scope.ServiceProvider.GetRequiredService<AppDb>();
 var canConnect = await db.Database.CanConnectAsync();
 
-await db.Database.MigrateAsync();
+// await db.Database.MigrateAsync();
 app.Logger.LogInformation("Can connect to database: {CanConnect}", canConnect);
 
 // Configure the HTTP request pipeline.

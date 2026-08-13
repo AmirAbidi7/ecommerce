@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using main.Config;
@@ -11,9 +12,11 @@ using main.Config;
 namespace main.Migrations
 {
     [DbContext(typeof(AppDb))]
-    partial class DbModelSnapshot : ModelSnapshot
+    [Migration("20260803234930_ProductDescription")]
+    partial class ProductDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,29 +101,6 @@ namespace main.Migrations
                     b.ToTable("carts", (string)null);
                 });
 
-            modelBuilder.Entity("main.Entity.CartItem", b =>
-                {
-                    b.Property<Guid>("CartId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("cart_id");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<int>("ProductAmount")
-                        .HasColumnType("integer")
-                        .HasColumnName("product_amount");
-
-                    b.HasKey("CartId", "ProductId")
-                        .HasName("pk_cart_items");
-
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_cart_items_product_id");
-
-                    b.ToTable("cart_items", (string)null);
-                });
-
             modelBuilder.Entity("main.Entity.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -128,11 +108,9 @@ namespace main.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("now()");
+                    b.Property<Guid?>("CartId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cart_id");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -159,6 +137,9 @@ namespace main.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_products");
+
+                    b.HasIndex("CartId")
+                        .HasDatabaseName("ix_products_cart_id");
 
                     b.ToTable("products", (string)null);
                 });
@@ -233,25 +214,12 @@ namespace main.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("main.Entity.CartItem", b =>
+            modelBuilder.Entity("main.Entity.Product", b =>
                 {
-                    b.HasOne("main.Entity.Cart", "Cart")
-                        .WithMany()
+                    b.HasOne("main.Entity.Cart", null)
+                        .WithMany("Products")
                         .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_cart_items_carts_cart_id");
-
-                    b.HasOne("main.Entity.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_cart_items_products_product_id");
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Product");
+                        .HasConstraintName("fk_products_carts_cart_id");
                 });
 
             modelBuilder.Entity("main.Entity.RefreshToken", b =>
@@ -269,6 +237,11 @@ namespace main.Migrations
             modelBuilder.Entity("main.Entity.AppUser", b =>
                 {
                     b.Navigation("Carts");
+                });
+
+            modelBuilder.Entity("main.Entity.Cart", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,3 +1,4 @@
+using main.DTO.cart;
 using main.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,8 @@ namespace main.Config
         public DbSet<Cart> Carts { get; set; }
         public DbSet<AppUser> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        public DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +29,20 @@ namespace main.Config
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<Product>()
+                .Property(p => p.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .ValueGeneratedOnAdd();
+            modelBuilder
+                .Entity<CartItem>()
+                .HasKey(ci => new { ci.CartId, ci.ProductId });
+            modelBuilder
+                .Entity<Cart>()
+                .HasMany(cart => cart.Products)
+                .WithMany()
+                .UsingEntity<CartItem>();
         }
     }
 }
