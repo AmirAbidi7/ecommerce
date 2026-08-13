@@ -3,7 +3,7 @@ using main.Events;
 
 namespace main.Service;
 
-public class ProducerService
+public class ProducerService : IProducerService
 {
     private readonly IConfiguration _configuration;
 

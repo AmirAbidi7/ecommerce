@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace main.Service;
 
-public class CartService(AppDb db, ProducerService producerService)
+public class CartService(AppDb db, IProducerService producerService)
 {
     public async Task<CartOverView> CreateCart(Guid userId)
     {
