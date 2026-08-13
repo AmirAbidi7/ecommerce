@@ -36,6 +36,9 @@ namespace main.Config
                 .HasDefaultValueSql("now()")
                 .ValueGeneratedOnAdd();
             modelBuilder
+                .Entity<CartItem>()
+                .HasKey(ci => new { ci.CartId, ci.ProductId });
+            modelBuilder
                 .Entity<Cart>()
                 .HasMany(cart => cart.Products)
                 .WithMany()

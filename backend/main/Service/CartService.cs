@@ -114,6 +114,7 @@ public class CartService(AppDb db, IProducerService producerService)
             if (item.ProductAmount <= 0)
             {
                 db.CartItems.Remove(item);
+                cartItems.Remove(item);
             }
         }
         await db.SaveChangesAsync();

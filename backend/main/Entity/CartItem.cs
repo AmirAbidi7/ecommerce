@@ -11,6 +11,6 @@ public class CartItem
     public int ProductAmount { get; set; }
     public Guid CartId { get; set; }
 
-    [ForeignKey(nameof(ProductId))]
+    [ForeignKey(nameof(CartId))]
     public Cart Cart { get; set; }
 }
