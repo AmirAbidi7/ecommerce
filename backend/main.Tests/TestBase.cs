@@ -1,4 +1,3 @@
-using Castle.Core.Configuration;
 using main.Config;
 using main.Service;
 using Microsoft.EntityFrameworkCore;
@@ -27,10 +26,10 @@ public abstract class TestBase
         jwtService = new JwtService(config);
     }
 
-    protected AppDb CreateContext()
+    protected AppDb CreateContext(string? databaseName = null)
     {
         var options = new DbContextOptionsBuilder<AppDb>()
-            .UseInMemoryDatabase(databaseName: "TestDb")
+            .UseInMemoryDatabase(databaseName ?? $"TestDb_{Guid.NewGuid()}")
             .Options;
         return new AppDb(options);
     }

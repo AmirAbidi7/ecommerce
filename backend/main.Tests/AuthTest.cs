@@ -15,7 +15,7 @@ public class AuthTest : TestBase
         RegisterUser registerUser = new("user@example.com", "Amir", "Abidi", "testtest");
 
         using var context = CreateContext();
-        AuthService authService = new(context, config);
+        AuthService authService = new(context, jwtService);
         var result = await authService.RegisterAsync(registerUser);
         Assert.NotNull(result);
     }
