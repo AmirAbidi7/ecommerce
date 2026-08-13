@@ -39,7 +39,8 @@ public class CartController(CartService cartService) : ControllerBase
         return await _cartService.RemoveFromCart(cart);
     }
 
-    public async Task<ActionResult<CartOverView>> PayCart([FromRoute] Guid cartId)
+    [HttpPost("{cartId}")]
+    public async Task<ActionResult> PayCart([FromRoute] Guid cartId)
     {
         await _cartService.PayCart(cartId);
 

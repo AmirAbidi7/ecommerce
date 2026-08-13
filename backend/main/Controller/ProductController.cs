@@ -18,7 +18,7 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok(productList);
     }
 
-    [HttpGet(":id")]
+    [HttpGet("{productId:guid}")]
     public async Task<ActionResult<ProdutDetails>> GetProduct([FromRoute] Guid productId)
     {
         var product = await productService.GetProductAsync(productId);
@@ -26,7 +26,7 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok(product);
     }
 
-    [HttpPut]
+    [HttpPut("favorite")]
     [Authorize]
     public async Task<ActionResult> FavoriteProduct([FromBody] Guid productId)
     {
@@ -35,7 +35,7 @@ public class ProductController(ProductService productService) : ControllerBase
         return Ok();
     }
 
-    [HttpPut]
+    [HttpPut("unfavorite")]
     [Authorize]
     public async Task<ActionResult> UnfavoriteProduct([FromBody] Guid productId)
     {
