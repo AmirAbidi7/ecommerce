@@ -3,12 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import ProductCard from "../share/components/Products/ProductCard/ProductCard";
 import { getProducts } from "../share/components/Products/fetchProducts";
+import { api } from "../share/api";
+import { useAuth } from "../share/auth/AuthContext";
 import { ProductOverview } from "../share/types";
 
 export default function Products() {
   const [products, setProducts] = useState<ProductOverview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>("");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const { token } = useAuth();
 
   useEffect(() => {
     getProducts().then((res) => {
@@ -16,6 +20,14 @@ export default function Products() {
       else setProducts(res);
     });
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    api<string[]>("/api/product/favorites").then(
+      (ids) => setFavorites(new Set(ids)),
+      () => setFavorites(new Set()),
+    );
+  }, [token]);
 
   const categories = useMemo(
     () => [...new Set(products.map((p) => p.CategoryName))].sort(),
@@ -40,7 +52,7 @@ export default function Products() {
       </label>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {visible.map((p) => (
-          <ProductCard key={p.Id} {...p} />
+          <ProductCard key={p.Id} product={p} favorited={favorites.has(p.Id)} />
         ))}
       </div>
     </div>

@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { ProductOverview } from "../../../types";
+import FavoriteButton from "./FavoriteButton";
 
-export default function ProductCard(product: ProductOverview) {
+export default function ProductCard({ product, favorited }: { product: ProductOverview; favorited: boolean }) {
   return (
     <div className="flex flex-col justify-center items-center rounded-sm">
+      <FavoriteButton productId={product.Id} initial={favorited} />
       <Image src={product.ImageUrl} className="mx-4" alt={product.Name} width={200} height={200} />
       <h3 className="text-xl text-slate-800">{product.Name}</h3>
       <p className="text-xs text-slate-400">{product.CategoryName}</p>
