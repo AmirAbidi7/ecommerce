@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"notification-service/internal/consumer"
 	"notification-service/internal/server/app"
 	"notification-service/internal/server/handlers"
 
@@ -52,6 +54,21 @@ func main() {
 	server := app.New()
 
 	server.RegisterFiberRoutes(h)
+
+	client, err := consumer.New(consumer.LoadConfig())
+	if err != nil {
+		panic(err)
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	// Placeholder dispatch: Task 3 replaces this with the real mail dispatch.
+	go func() {
+		if err := consumer.Run(context.Background(), client, func(_ context.Context, topic string, value []byte) error {
+			logger.Info("received", "topic", topic, "bytes", len(value))
+			return nil
+		}, logger); err != nil {
+			logger.Error("consumer exited", "error", err)
+		}
+	}()
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
