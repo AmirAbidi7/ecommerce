@@ -20,6 +20,7 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<IProducerService, ProducerService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<SaleService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddDbContext<AppDb>(
     (sp, options) =>

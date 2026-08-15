@@ -64,4 +64,26 @@ public class ProductControllerRoutingTests
         Assert.Equal("favorites", httpGet.Template);
         Assert.NotNull(method.GetCustomAttributes(typeof(AuthorizeAttribute), true).Single());
     }
+
+    [Fact]
+    public void CreateSale_ShouldBeHttpPostWithAuthorize()
+    {
+        var method = typeof(ProductController).GetMethod(nameof(ProductController.CreateSale))!;
+
+        var httpPost = method.GetCustomAttributes(typeof(HttpPostAttribute), true).Cast<HttpPostAttribute>().Single();
+        Assert.Equal("{productId:guid}/sale", httpPost.Template);
+        var authorize = method.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Single();
+        Assert.Equal("Author", authorize.Roles);
+    }
+
+    [Fact]
+    public void CancelSale_ShouldBeHttpDeleteWithAuthorize()
+    {
+        var method = typeof(ProductController).GetMethod(nameof(ProductController.CancelSale))!;
+
+        var httpDelete = method.GetCustomAttributes(typeof(HttpDeleteAttribute), true).Cast<HttpDeleteAttribute>().Single();
+        Assert.Equal("{productId:guid}/sale", httpDelete.Template);
+        var authorize = method.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().Single();
+        Assert.Equal("Author", authorize.Roles);
+    }
 }

@@ -6,6 +6,7 @@ using main.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace main.Tests;
 
@@ -19,7 +20,7 @@ public class ProductControllerTests : TestBase
             http.User = new ClaimsPrincipal(
                 new ClaimsIdentity(new[] { new Claim("UserId", userId.ToString()!) }, "Test"));
         }
-        return new ProductController(new ProductService(db))
+        return new ProductController(new ProductService(db), new SaleService(db, Mock.Of<IProducerService>()))
         {
             ControllerContext = new ControllerContext { HttpContext = http },
         };

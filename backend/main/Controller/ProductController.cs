@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using main.DTO.product;
+using main.DTO.sale;
 using main.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace main.Controller;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class ProductController(ProductService productService) : ControllerBase
+public class ProductController(ProductService productService, SaleService saleService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<ICollection<ProductOverview>>> GetProducts()
@@ -59,6 +60,24 @@ public class ProductController(ProductService productService) : ControllerBase
     {
         var userId = new Guid(User.FindFirstValue("UserId")!);
         await productService.UnlistProductAsync(productId, userId);
+        return Ok();
+    }
+
+    [HttpPost("{productId:guid}/sale")]
+    [Authorize(Roles = "Author")]
+    public async Task<ActionResult> CreateSale([FromRoute] Guid productId, [FromBody] CreateSaleRequest request)
+    {
+        var userId = new Guid(User.FindFirstValue("UserId")!);
+        await saleService.CreateSaleAsync(productId, userId, request);
+        return Ok();
+    }
+
+    [HttpDelete("{productId:guid}/sale")]
+    [Authorize(Roles = "Author")]
+    public async Task<ActionResult> CancelSale([FromRoute] Guid productId)
+    {
+        var userId = new Guid(User.FindFirstValue("UserId")!);
+        await saleService.CancelSaleAsync(productId, userId);
         return Ok();
     }
 

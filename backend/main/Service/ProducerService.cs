@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Confluent.Kafka;
 using main.Events;
 
@@ -6,8 +7,7 @@ namespace main.Service;
 public class ProducerService : IProducerService
 {
     private readonly IConfiguration _configuration;
-
-    private readonly IProducer<Null, PurchaseEvent> _EmailNotificiationProducer;
+    private readonly IProducer<Null, string> _producer;
 
     public ProducerService(IConfiguration configuration)
     {
@@ -16,15 +16,17 @@ public class ProducerService : IProducerService
         {
             BootstrapServers = _configuration["Kafka:BootstrapServers"],
         };
-
-        _EmailNotificiationProducer = new ProducerBuilder<Null, PurchaseEvent>(
-            producerConfig
-        ).Build();
+        _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
     }
 
-    public async Task ProduceAsync(string topic, PurchaseEvent purchase)
+    public Task ProduceAsync(string topic, PurchaseEvent purchase) =>
+        ProduceAsync(topic, JsonSerializer.Serialize(purchase));
+
+    public Task ProduceAsync(string topic, PromotionEvent promotion) =>
+        ProduceAsync(topic, JsonSerializer.Serialize(promotion));
+
+    private async Task ProduceAsync(string topic, string json)
     {
-        var kafkaMessage = new Message<Null, PurchaseEvent> { Value = purchase };
-        await _EmailNotificiationProducer.ProduceAsync(topic, kafkaMessage);
+        await _producer.ProduceAsync(topic, new Message<Null, string> { Value = json });
     }
 }
