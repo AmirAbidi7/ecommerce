@@ -22,6 +22,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<SaleService>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<AuthorService>();
 builder.Services.AddDbContext<AppDb>(
     (sp, options) =>
     {
