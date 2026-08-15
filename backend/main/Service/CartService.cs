@@ -150,6 +150,8 @@ public class CartService(AppDb db, IProducerService producerService)
             .CartItems.Where(i => i.CartId == cartId)
             .Include(i => i.Product)
             .ThenInclude(p => p.Author)
+            .Include(i => i.Product)
+            .ThenInclude(p => p.Category)
             .ToListAsync();
 
         var now = DateTime.UtcNow;

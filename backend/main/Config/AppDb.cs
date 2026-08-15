@@ -52,6 +52,11 @@ namespace main.Config
                 .UsingEntity<CartItem>();
 
             modelBuilder
+                .Entity<Category>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
+
+            modelBuilder
                 .Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)

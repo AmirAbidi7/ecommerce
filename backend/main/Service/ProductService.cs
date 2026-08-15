@@ -31,6 +31,19 @@ namespace main.Service
             {
                 category = new Category { Id = Guid.NewGuid(), Name = request.CategoryName };
                 db.Categories.Add(category);
+                try
+                {
+                    await db.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    db.Entry(category).State = EntityState.Detached;
+                    category = await db.Categories.FirstOrDefaultAsync(c => c.Name == request.CategoryName);
+                    if (category is null)
+                    {
+                        throw;
+                    }
+                }
             }
 
             var product = new Product
@@ -69,7 +82,8 @@ namespace main.Service
         {
             var product = await db
                 .Products.Include(p => p.Category)
-                .FirstAsync(p => p.Id == productId);
+                .FirstOrDefaultAsync(p => p.Id == productId && p.IsListed)
+                ?? throw new KeyNotFoundException("Product not found!");
             var now = DateTime.UtcNow;
             var activeSale = await db.Sales.FirstOrDefaultAsync(s =>
                 s.ProductId == productId && s.StartsAt <= now && s.EndsAt >= now

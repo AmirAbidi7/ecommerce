@@ -90,6 +90,75 @@ public class SaleServiceTests : TestBase
     }
 
     [Fact]
+    public async Task CreateSale_ShouldRejectPercentOffBelowOne()
+    {
+        using var db = CreateContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "a@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = CreateProduct(author.Id!.Value);
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        var service = new SaleService(db, new Mock<IProducerService>().Object);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            service.CreateSaleAsync(product.Id, author.Id!.Value,
+                new CreateSaleRequest(0, DateTime.UtcNow, DateTime.UtcNow.AddDays(1))));
+    }
+
+    [Fact]
+    public async Task CreateSale_ShouldRejectPercentOffAboveHundred()
+    {
+        using var db = CreateContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "a@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = CreateProduct(author.Id!.Value);
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        var service = new SaleService(db, new Mock<IProducerService>().Object);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            service.CreateSaleAsync(product.Id, author.Id!.Value,
+                new CreateSaleRequest(101, DateTime.UtcNow, DateTime.UtcNow.AddDays(1))));
+    }
+
+    [Fact]
+    public async Task CreateSale_ShouldRejectInvalidDateRange()
+    {
+        using var db = CreateContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "a@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = CreateProduct(author.Id!.Value);
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        var service = new SaleService(db, new Mock<IProducerService>().Object);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.CreateSaleAsync(product.Id, author.Id!.Value,
+                new CreateSaleRequest(20, DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(1))));
+    }
+
+    [Fact]
+    public async Task CreateSale_ShouldRejectUnlistedProduct()
+    {
+        using var db = CreateContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "a@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = CreateProduct(author.Id!.Value);
+        product.IsListed = false;
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        var service = new SaleService(db, new Mock<IProducerService>().Object);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.CreateSaleAsync(product.Id, author.Id!.Value,
+                new CreateSaleRequest(20, DateTime.UtcNow, DateTime.UtcNow.AddDays(1))));
+    }
+
+    [Fact]
     public async Task CancelSale_ShouldRemoveActiveSales()
     {
         using var db = CreateContext();
@@ -98,8 +167,32 @@ public class SaleServiceTests : TestBase
         db.Users.Add(author);
         db.Products.Add(product);
         await db.SaveChangesAsync();
+        db.Sales.AddRange(
+            new Sale { Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 10,
+                StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1),
+                CreatedBy = author.Id!.Value, Product = null! },
+            new Sale { Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 5,
+                StartsAt = DateTime.UtcNow.AddDays(-5), EndsAt = DateTime.UtcNow.AddDays(-3),
+                CreatedBy = author.Id!.Value, Product = null! });
+        await db.SaveChangesAsync();
+
+        var service = new SaleService(db, new Mock<IProducerService>().Object);
+        await service.CancelSaleAsync(product.Id, author.Id!.Value);
+
+        Assert.Empty(db.Sales);
+    }
+
+    [Fact]
+    public async Task CancelSale_ShouldRemoveFutureSale()
+    {
+        using var db = CreateContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "a@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = CreateProduct(author.Id!.Value);
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
         db.Sales.Add(new Sale { Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 10,
-            StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1), CreatedBy = author.Id!.Value,
+            StartsAt = DateTime.UtcNow.AddDays(5), EndsAt = DateTime.UtcNow.AddDays(10), CreatedBy = author.Id!.Value,
             Product = null! });
         await db.SaveChangesAsync();
 

@@ -369,8 +369,10 @@ public class CartServiceTests : TestBase
     {
         using var db = CreateSqliteContext();
         var author = new AppUser { Id = Guid.NewGuid(), Email = "author@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var category = new Category { Id = Guid.NewGuid(), Name = "SciFi" };
         var product = new Product { Id = Guid.NewGuid(), Name = "Book", Stock = 5, Price = 100f,
-            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true, AuthorId = author.Id };
+            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true,
+            AuthorId = author.Id, Category = category };
         var user = new AppUser { Id = Guid.NewGuid(), Email = "buyer@x.com", FirstName = "B", LastName = "U", Password = "p" };
         var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
         db.Users.AddRange(author, user);
@@ -392,7 +394,28 @@ public class CartServiceTests : TestBase
                 e.AuthorNotices.Count == 1 &&
                 e.AuthorNotices.Single().AuthorEmail == "author@x.com" &&
                 e.AuthorNotices.Single().UnitPricePaid == 75f &&
-                e.AuthorNotices.Single().SalePercentOff == 25)),
+                e.AuthorNotices.Single().SalePercentOff == 25 &&
+                e.Cart.Items.Single().Product.CategoryName == "SciFi")),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task PayCart_ShouldSnapshotBasePriceWithoutSale()
+    {
+        using var db = CreateSqliteContext();
+        var product = new Product { Id = Guid.NewGuid(), Name = "Book", Stock = 5, Price = 100f,
+            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true };
+        var user = new AppUser { Id = Guid.NewGuid(), Email = "b@x.com", FirstName = "B", LastName = "U", Password = "p" };
+        var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
+        db.Users.Add(user);
+        db.Products.Add(product);
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = product.Id, ProductAmount = 2 });
+        await db.SaveChangesAsync();
+
+        await CreateService(db).Service.PayCart(cart.Id);
+
+        Assert.Equal(100f, db.CartItems.Single().UnitPricePaid);
     }
 }

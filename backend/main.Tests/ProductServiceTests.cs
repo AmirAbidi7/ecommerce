@@ -65,8 +65,21 @@ public class ProductServiceTests : TestBase
     public async Task GetProduct_ShouldThrowWhenMissing()
     {
         using var db = CreateContext();
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<KeyNotFoundException>(
             () => new ProductService(db).GetProductAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetProduct_ShouldThrowWhenUnlisted()
+    {
+        using var db = CreateContext();
+        var product = CreateProduct();
+        product.IsListed = false;
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => new ProductService(db).GetProductAsync(product.Id));
     }
 
     [Fact]
