@@ -1,3 +1,11 @@
+// Package consumer runs the Kafka consumption loop for the mailing service.
+//
+// Delivery semantics are at-most-once: with franz-go's default auto-committer
+// a record is committed as soon as its handle callback returns, whether it
+// succeeded or failed. A failed event is logged (with topic, partition and
+// offset, so it can be found again) and skipped; a mid-event failure aborts the
+// remaining mails for that event. Logs are the audit trail. Review this
+// contract before swapping LogMailer for a real SMTP mailer.
 package consumer
 
 import (
@@ -44,7 +52,12 @@ func Run(
 		}
 		fetches.EachRecord(func(record *kgo.Record) {
 			if err := handle(ctx, record.Topic, record.Value); err != nil {
-				logger.Error("handle failed", "topic", record.Topic, "error", err)
+				logger.Error("handle failed",
+					"topic", record.Topic,
+					"partition", record.Partition,
+					"offset", record.Offset,
+					"error", err,
+				)
 			}
 		})
 	}

@@ -65,8 +65,12 @@ func main() {
 		panic(err)
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	shutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	consumerDone := make(chan struct{})
 	go func() {
-		if err := consumer.Run(context.Background(), client, newMailDispatch(logger), logger); err != nil {
+		defer close(consumerDone)
+		if err := consumer.Run(shutdownCtx, client, newMailDispatch(logger), logger); err != nil {
 			logger.Error("consumer exited", "error", err)
 		}
 	}()
@@ -87,5 +91,6 @@ func main() {
 
 	// Wait for the graceful shutdown to complete
 	<-done
+	<-consumerDone
 	log.Println("Graceful shutdown complete.")
 }
