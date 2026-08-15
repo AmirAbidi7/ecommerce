@@ -1,3 +1,5 @@
+using main.Service;
+
 namespace main.Middleware;
 
 public class GlobalExceptionMiddleware(
@@ -27,6 +29,7 @@ public class GlobalExceptionMiddleware(
             ArgumentException => StatusCodes.Status400BadRequest,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             KeyNotFoundException => StatusCodes.Status404NotFound,
+            InsufficientStockException => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError,
         };

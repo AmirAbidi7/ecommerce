@@ -1,5 +1,6 @@
 using System.Text.Json;
 using main.Middleware;
+using main.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -25,6 +26,7 @@ public class GlobalExceptionMiddlewareTests
     [InlineData(typeof(ArgumentException), StatusCodes.Status400BadRequest)]
     [InlineData(typeof(UnauthorizedAccessException), StatusCodes.Status401Unauthorized)]
     [InlineData(typeof(KeyNotFoundException), StatusCodes.Status404NotFound)]
+    [InlineData(typeof(InsufficientStockException), StatusCodes.Status400BadRequest)]
     [InlineData(typeof(InvalidOperationException), StatusCodes.Status404NotFound)]
     [InlineData(typeof(Exception), StatusCodes.Status500InternalServerError)]
     public async Task ShouldMapExceptionToStatus(Type exceptionType, int expectedStatus)

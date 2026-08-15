@@ -53,7 +53,7 @@ public class AuthorService(AppDb db)
                 g.Key,
                 g.First().Product.Name,
                 g.Sum(ci => ci.ProductAmount),
-                g.Sum(ci => ci.Product.Price * ci.ProductAmount)
+                g.Sum(ci => ci.UnitPricePaid * ci.ProductAmount)
             ))
             .ToList();
     }

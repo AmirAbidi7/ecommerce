@@ -1,10 +1,10 @@
 using main.Config;
 using main.DTO.cart;
+using main.DTO.product;
 using main.Entity;
 using main.Enum;
 using main.Events;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace main.Service;
 
@@ -144,18 +144,83 @@ public class CartService(AppDb db, IProducerService producerService)
         {
             throw new InvalidOperationException("Cart already paid");
         }
+
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var items = await db
+            .CartItems.Where(i => i.CartId == cartId)
+            .Include(i => i.Product)
+            .ThenInclude(p => p.Author)
+            .ToListAsync();
+
+        var now = DateTime.UtcNow;
+        var sales = await db
+            .Sales.Where(s =>
+                items.Select(i => i.ProductId).Contains(s.ProductId) && s.StartsAt <= now && s.EndsAt >= now
+            )
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            var affected = await db
+                .Products.Where(p => p.Id == item.ProductId && p.Stock >= item.ProductAmount)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - item.ProductAmount));
+            if (affected == 0)
+            {
+                throw new InsufficientStockException(
+                    $"Insufficient stock for product {item.Product.Name}"
+                );
+            }
+
+            var sale = sales.FirstOrDefault(s => s.ProductId == item.ProductId);
+            item.UnitPricePaid =
+                sale == null
+                    ? item.Product.Price
+                    : Pricing.EffectivePrice(item.Product.Price, sale.PercentOff);
+        }
+
         cart.Status = CartStatus.PAID;
         await db.SaveChangesAsync();
-        var items = await db
-            .CartItems.Where(items => items.CartId == cartId)
-            .Include(items => items.Product)
-            .ToListAsync();
+        await transaction.CommitAsync();
+
         var user =
-            await db.Users.FirstOrDefaultAsync(user => user.Id == cart.UserId)
+            await db.Users.FirstOrDefaultAsync(u => u.Id == cart.UserId)
             ?? throw new KeyNotFoundException("User not found !");
-        producerService.ProduceAsync(
+        var notices = items
+            .Where(i => i.Product.Author != null)
+            .Select(i =>
+            {
+                var sale = sales.FirstOrDefault(s => s.ProductId == i.ProductId);
+                return new AuthorNotice(
+                    i.Product.Author!.Email,
+                    i.Product.Author!.FirstName + " " + i.Product.Author!.LastName,
+                    i.ProductId,
+                    i.Product.Name,
+                    i.ProductAmount,
+                    i.UnitPricePaid,
+                    sale?.PercentOff
+                );
+            })
+            .ToList();
+
+        await producerService.ProduceAsync(
             "payment-completed",
-            new PurchaseEvent(user.Email, new CartOverView(cartId, items))
+            new PurchaseEvent(
+                user.Email,
+                new CartOverView(
+                    cartId,
+                    items
+                        .Select(ci => new CartProduct(
+                            ci.ProductId,
+                            new ProductOverview(
+                                ci.Product,
+                                sales.FirstOrDefault(s => s.ProductId == ci.ProductId)
+                            ),
+                            ci.ProductAmount
+                        ))
+                        .ToList()
+                ),
+                notices
+            )
         );
     }
 }

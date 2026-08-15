@@ -33,4 +33,16 @@ public abstract class TestBase
             .Options;
         return new AppDb(options);
     }
+
+    protected AppDb CreateSqliteContext()
+    {
+        var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AppDb>()
+            .UseSqlite(connection)
+            .Options;
+        var db = new AppDb(options);
+        db.Database.EnsureCreated();
+        return db;
+    }
 }

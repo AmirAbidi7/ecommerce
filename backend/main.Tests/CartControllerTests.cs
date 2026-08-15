@@ -49,7 +49,7 @@ public class CartControllerTests : TestBase
     [Fact]
     public async Task GetCart_ShouldReturnActiveCart()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var userId = Guid.NewGuid();
         await SeedUser(db, userId);
         var (controller, _) = CreateController(db, userId);
@@ -64,7 +64,7 @@ public class CartControllerTests : TestBase
     [Fact]
     public async Task PayCart_ShouldMarkPaid()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var userId = Guid.NewGuid();
         var user = await SeedUser(db, userId);
         var cart = new Cart

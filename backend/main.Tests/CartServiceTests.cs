@@ -68,7 +68,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task CreateCart_ShouldCreateCreatedCart()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var user = CreateUser(Guid.NewGuid());
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -84,7 +84,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task CreateCart_ShouldThrowWhenUserMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => CreateService(db).Service.CreateCart(Guid.NewGuid()));
     }
@@ -92,7 +92,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task GetCart_ShouldReturnActiveCartWithItems()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -115,7 +115,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task GetCart_ShouldThrowWhenNoActiveCart()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var user = CreateUser(Guid.NewGuid());
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -127,7 +127,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task AddToCart_ShouldCreateNewItem()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -144,7 +144,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task AddToCart_ShouldIncrementExistingItem()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -160,7 +160,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task AddToCart_ShouldThrowWhenCartMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             CreateService(db).Service.AddToCart(new CartProductRequest(Guid.NewGuid(), Guid.NewGuid(), 1)));
     }
@@ -168,7 +168,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task RemoveFromCart_ShouldDecrement()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -184,7 +184,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task RemoveFromCart_ShouldDeleteItemAtZero()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -201,7 +201,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task RemoveFromCart_ShouldThrowWhenCartMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             CreateService(db).Service.RemoveFromCart(new CartProductRequest(Guid.NewGuid(), Guid.NewGuid(), 1)));
     }
@@ -209,7 +209,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task RemoveFromCart_ShouldThrowWhenProductMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             CreateService(db).Service.RemoveFromCart(new CartProductRequest(Guid.NewGuid(), cart.Id, 1)));
@@ -218,7 +218,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task RemoveFromCart_ShouldThrowWhenItemMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         var product = CreateProduct();
         db.Products.Add(product);
@@ -231,7 +231,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task GetCarts_ShouldGroupItemsByCart()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart1, _) = await SeedUserWithCart(db);
         var cart2 = new Cart
         {
@@ -259,7 +259,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task PayCart_ShouldMarkPaidAndProduceEvent()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, user) = await SeedUserWithCart(db);
         var (service, producer) = CreateService(db);
 
@@ -275,7 +275,7 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task PayCart_ShouldThrowWhenAlreadyPaid()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         var (cart, _) = await SeedUserWithCart(db);
         cart.Status = CartStatus.PAID;
         await db.SaveChangesAsync();
@@ -287,8 +287,112 @@ public class CartServiceTests : TestBase
     [Fact]
     public async Task PayCart_ShouldThrowWhenCartMissing()
     {
-        using var db = CreateContext();
+        using var db = CreateSqliteContext();
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => CreateService(db).Service.PayCart(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task PayCart_ShouldDecrementStock()
+    {
+        using var db = CreateSqliteContext();
+        var product = new Product { Id = Guid.NewGuid(), Name = "Book", Stock = 5, Price = 100f,
+            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true };
+        var user = new AppUser { Id = Guid.NewGuid(), Email = "b@x.com", FirstName = "B", LastName = "U", Password = "p" };
+        var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
+        db.Users.Add(user);
+        db.Products.Add(product);
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = product.Id, ProductAmount = 2 });
+        await db.SaveChangesAsync();
+
+        await CreateService(db).Service.PayCart(cart.Id);
+
+        // AsNoTracking: ExecuteUpdateAsync writes the row directly and the tracked
+        // entity in this context is stale.
+        Assert.Equal(3, db.Products.AsNoTracking().Single(p => p.Id == product.Id).Stock);
+        Assert.Equal(CartStatus.PAID, db.Carts.Find(cart.Id)!.Status);
+    }
+
+    [Fact]
+    public async Task PayCart_ShouldSnapshotUnitPriceWithActiveSale()
+    {
+        using var db = CreateSqliteContext();
+        var product = new Product { Id = Guid.NewGuid(), Name = "Book", Stock = 5, Price = 100f,
+            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true };
+        var user = new AppUser { Id = Guid.NewGuid(), Email = "b@x.com", FirstName = "B", LastName = "U", Password = "p" };
+        var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
+        db.Users.Add(user);
+        db.Products.Add(product);
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        db.Sales.Add(new Sale { Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 25,
+            StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1), CreatedBy = Guid.NewGuid(), Product = null! });
+        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = product.Id, ProductAmount = 2 });
+        await db.SaveChangesAsync();
+
+        await CreateService(db).Service.PayCart(cart.Id);
+
+        Assert.Equal(75f, db.CartItems.Single().UnitPricePaid);
+    }
+
+    [Fact]
+    public async Task PayCart_ShouldRejectInsufficientStockWithoutPartialDecrement()
+    {
+        using var db = CreateSqliteContext();
+        var scarce = new Product { Id = Guid.NewGuid(), Name = "Scarce", Stock = 1, Price = 100f,
+            ImageUrl = "http://img/s.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true };
+        var fine = new Product { Id = Guid.NewGuid(), Name = "Fine", Stock = 10, Price = 50f,
+            ImageUrl = "http://img/f.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true };
+        var user = new AppUser { Id = Guid.NewGuid(), Email = "b@x.com", FirstName = "B", LastName = "U", Password = "p" };
+        var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
+        db.Users.Add(user);
+        db.Products.AddRange(scarce, fine);
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        db.CartItems.AddRange(
+            new CartItem { CartId = cart.Id, ProductId = fine.Id, ProductAmount = 5 },
+            new CartItem { CartId = cart.Id, ProductId = scarce.Id, ProductAmount = 2 });
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InsufficientStockException>(
+            () => CreateService(db).Service.PayCart(cart.Id));
+
+        Assert.Equal(1, db.Products.Find(scarce.Id)!.Stock);
+        Assert.Equal(10, db.Products.Find(fine.Id)!.Stock);
+        Assert.Equal(CartStatus.CREATED, db.Carts.Find(cart.Id)!.Status);
+    }
+
+    [Fact]
+    public async Task PayCart_ShouldProduceEnrichedEventWithAuthorNotices()
+    {
+        using var db = CreateSqliteContext();
+        var author = new AppUser { Id = Guid.NewGuid(), Email = "author@x.com", FirstName = "A", LastName = "B", Password = "p" };
+        var product = new Product { Id = Guid.NewGuid(), Name = "Book", Stock = 5, Price = 100f,
+            ImageUrl = "http://img/b.png", Description = "d", CreatedAt = DateTime.UtcNow, IsListed = true, AuthorId = author.Id };
+        var user = new AppUser { Id = Guid.NewGuid(), Email = "buyer@x.com", FirstName = "B", LastName = "U", Password = "p" };
+        var cart = new Cart { Id = Guid.NewGuid(), Status = CartStatus.CREATED, Products = [], UserId = user.Id!.Value, User = user };
+        db.Users.AddRange(author, user);
+        db.Products.Add(product);
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = product.Id, ProductAmount = 2 });
+        await db.SaveChangesAsync();
+        db.Sales.Add(new Sale { Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 25,
+            StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1), CreatedBy = author.Id!.Value, Product = null! });
+        await db.SaveChangesAsync();
+
+        var (service, producer) = CreateService(db);
+        await service.PayCart(cart.Id);
+
+        producer.Verify(p => p.ProduceAsync("payment-completed",
+            It.Is<PurchaseEvent>(e =>
+                e.UserEmail == "buyer@x.com" &&
+                e.AuthorNotices.Count == 1 &&
+                e.AuthorNotices.Single().AuthorEmail == "author@x.com" &&
+                e.AuthorNotices.Single().UnitPricePaid == 75f &&
+                e.AuthorNotices.Single().SalePercentOff == 25)),
+            Times.Once);
     }
 }

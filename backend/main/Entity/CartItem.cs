@@ -9,6 +9,7 @@ public class CartItem
     [ForeignKey(nameof(ProductId))]
     public Product Product { get; set; }
     public int ProductAmount { get; set; }
+    public float UnitPricePaid { get; set; }
     public Guid CartId { get; set; }
 
     [ForeignKey(nameof(CartId))]

@@ -1,4 +1,3 @@
-using main.DTO.author;
 using main.Entity;
 using main.Enum;
 using main.Service;
@@ -78,13 +77,13 @@ public class AuthorServiceTests : TestBase
         db.Products.Add(book);
         db.Carts.Add(cart);
         await db.SaveChangesAsync();
-        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = book.Id, ProductAmount = 3 });
+        db.CartItems.Add(new CartItem { CartId = cart.Id, ProductId = book.Id, ProductAmount = 3, UnitPricePaid = 75f });
         await db.SaveChangesAsync();
 
         var result = await new AuthorService(db).GetSalesAsync(author.Id!.Value);
 
         var stat = Assert.Single(result);
         Assert.Equal(3, stat.UnitsSold);
-        Assert.Equal(300f, stat.Revenue);
+        Assert.Equal(225f, stat.Revenue);
     }
 }

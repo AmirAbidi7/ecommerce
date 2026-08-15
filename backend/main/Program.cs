@@ -14,7 +14,19 @@ builder.Configuration.AddEnvironmentVariables();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = null);
+builder.Services.AddCors(options =>
+    options.AddPolicy(
+        "frontend",
+        policy => policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+    )
+);
 builder.Services.AddLogging();
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<IProducerService, ProducerService>();
@@ -71,6 +83,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
+app.UseCors("frontend");
 app.MapControllers();
 app.UseAuthentication();
 app.UseAuthorization();
