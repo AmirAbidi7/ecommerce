@@ -12,7 +12,7 @@ using main.Config;
 namespace main.Migrations
 {
     [DbContext(typeof(AppDb))]
-    [Migration("20260815224539_AddCategoryAndSale")]
+    [Migration("20260815224813_AddCategoryAndSale")]
     partial class AddCategoryAndSale
     {
         /// <inheritdoc />
@@ -174,7 +174,9 @@ namespace main.Migrations
                         .HasColumnName("image_url");
 
                     b.Property<bool>("IsListed")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(true)
                         .HasColumnName("is_listed");
 
                     b.Property<string>("Name")

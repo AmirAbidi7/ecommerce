@@ -28,7 +28,7 @@ namespace main.Migrations
                 table: "products",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.CreateTable(
                 name: "categories",

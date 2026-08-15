@@ -171,7 +171,9 @@ namespace main.Migrations
                         .HasColumnName("image_url");
 
                     b.Property<bool>("IsListed")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(true)
                         .HasColumnName("is_listed");
 
                     b.Property<string>("Name")
