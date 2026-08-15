@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using main.Enum;
 
 namespace main.Entity
 {
@@ -10,6 +11,7 @@ namespace main.Entity
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
         public required string Password { get; set; }
+        public UserRole Role { get; set; } = UserRole.User;
 
         public ICollection<Product>? FavoriteProducts { get; set; }
 

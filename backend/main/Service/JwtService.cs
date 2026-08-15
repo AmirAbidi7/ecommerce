@@ -18,6 +18,7 @@ public class JwtService(IConfiguration config)
             new Claim("UserId", user.Id!.Value.ToString()),
             new Claim("FirstName", user.FirstName),
             new Claim("Email", user.Email),
+            new Claim("Role", user.Role.ToString()),
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

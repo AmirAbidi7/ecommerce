@@ -1,6 +1,7 @@
 using main.Config;
 using main.dto.auth;
 using main.Entity;
+using main.Enum;
 using main.Service;
 using Microsoft.EntityFrameworkCore;
 
@@ -133,5 +134,25 @@ public class AuthServiceTests : TestBase
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => CreateService(db).Refresh("expired-token"));
+    }
+
+    [Fact]
+    public void GenerateToken_ShouldIncludeRoleClaim()
+    {
+        var user = new AppUser
+        {
+            Id = Guid.NewGuid(),
+            Email = "author@example.com",
+            FirstName = "Amir",
+            LastName = "Abidi",
+            Password = "hash",
+            Role = UserRole.Author,
+        };
+
+        var token = jwtService.GenerateToken(user);
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+
+        Assert.Equal("Author", jwt.Claims.First(c => c.Type == "Role").Value);
     }
 }
