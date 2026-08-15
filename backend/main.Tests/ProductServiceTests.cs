@@ -16,6 +16,7 @@ public class ProductServiceTests : TestBase
             Price = 999.99f,
             ImageUrl = "http://img/laptop.png",
             Description = "A laptop",
+            IsListed = true,
             CreatedAt = DateTime.UtcNow,
         };
     }

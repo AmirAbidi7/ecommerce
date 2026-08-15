@@ -37,6 +37,7 @@ public class ProductControllerTests : TestBase
             Price = 1,
             ImageUrl = "u",
             Description = "d",
+            IsListed = true,
             CreatedAt = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
@@ -59,6 +60,7 @@ public class ProductControllerTests : TestBase
             Price = 1,
             ImageUrl = "u",
             Description = "d",
+            IsListed = true,
             CreatedAt = DateTime.UtcNow,
         };
         db.Users.Add(new AppUser
