@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"notification-service/internal/consumer"
+	"notification-service/internal/mail"
 	"notification-service/internal/server/app"
 	"notification-service/internal/server/handlers"
 
@@ -45,6 +46,10 @@ func gracefulShutdown(fiberServer *app.FiberServer, done chan bool) {
 	done <- true
 }
 
+func newMailDispatch(logger *slog.Logger) func(ctx context.Context, topic string, value []byte) error {
+	return consumer.NewDispatchHandler(mail.NewLogMailer(logger))
+}
+
 func main() {
 	h, err := handlers.New()
 	if err != nil {
@@ -60,12 +65,8 @@ func main() {
 		panic(err)
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	// Placeholder dispatch: Task 3 replaces this with the real mail dispatch.
 	go func() {
-		if err := consumer.Run(context.Background(), client, func(_ context.Context, topic string, value []byte) error {
-			logger.Info("received", "topic", topic, "bytes", len(value))
-			return nil
-		}, logger); err != nil {
+		if err := consumer.Run(context.Background(), client, newMailDispatch(logger), logger); err != nil {
 			logger.Error("consumer exited", "error", err)
 		}
 	}()
