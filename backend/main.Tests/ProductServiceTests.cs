@@ -1,3 +1,4 @@
+using main.DTO.product;
 using main.Entity;
 using main.Service;
 using Microsoft.EntityFrameworkCore;
@@ -154,6 +155,75 @@ public class ProductServiceTests : TestBase
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => new ProductService(db).UnfavoriteProduct(product.Id, user.Id!.Value));
+    }
+
+    [Fact]
+    public async Task CreateProduct_ShouldUpsertCategoryAndSetAuthor()
+    {
+        using var db = CreateContext();
+        var author = CreateUser(Guid.NewGuid());
+        db.Users.Add(author);
+
+        var result = await new ProductService(db).CreateProductAsync(
+            new CreateProductRequest("Book", 20f, 5, "http://img/b.png", "desc", "Fiction"), author.Id!.Value);
+
+        Assert.Equal("Fiction", result.CategoryName);
+        Assert.Equal(1, db.Categories.Count());
+        Assert.Equal(author.Id, db.Products.Single().AuthorId);
+
+        var second = await new ProductService(db).CreateProductAsync(
+            new CreateProductRequest("Book2", 25f, 3, "http://img/b2.png", "desc", "Fiction"), author.Id!.Value);
+
+        Assert.Equal(1, db.Categories.Count());
+        Assert.Equal(2, db.Products.Count());
+    }
+
+    [Fact]
+    public async Task UnlistProduct_ShouldSoftDeleteForOwner()
+    {
+        using var db = CreateContext();
+        var author = CreateUser(Guid.NewGuid());
+        var product = CreateProduct();
+        product.AuthorId = author.Id;
+        db.Users.Add(author);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        await new ProductService(db).UnlistProductAsync(product.Id, author.Id!.Value);
+
+        Assert.False((await db.Products.FindAsync(product.Id))!.IsListed);
+    }
+
+    [Fact]
+    public async Task UnlistProduct_ShouldRejectNonOwner()
+    {
+        using var db = CreateContext();
+        var author = CreateUser(Guid.NewGuid());
+        var stranger = CreateUser(Guid.NewGuid());
+        var product = CreateProduct();
+        product.AuthorId = author.Id;
+        db.Users.AddRange(author, stranger);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => new ProductService(db).UnlistProductAsync(product.Id, stranger.Id!.Value));
+    }
+
+    [Fact]
+    public async Task GetFavoriteIds_ShouldReturnFavoritedProductIds()
+    {
+        using var db = CreateContext();
+        var user = CreateUser(Guid.NewGuid());
+        var product = CreateProduct();
+        user.FavoriteProducts = [product];
+        db.Users.Add(user);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+
+        var result = await new ProductService(db).GetFavoriteIdsAsync(user.Id!.Value);
+
+        Assert.Equal([product.Id], result);
     }
 
     [Fact]

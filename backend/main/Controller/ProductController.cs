@@ -43,4 +43,30 @@ public class ProductController(ProductService productService) : ControllerBase
         await productService.UnfavoriteProduct(productId, new Guid(userId!));
         return Ok();
     }
+
+    [HttpPost]
+    [Authorize(Roles = "Author")]
+    public async Task<ActionResult<ProductOverview>> CreateProduct([FromBody] CreateProductRequest request)
+    {
+        var userId = new Guid(User.FindFirstValue("UserId")!);
+        var product = await productService.CreateProductAsync(request, userId);
+        return Ok(product);
+    }
+
+    [HttpDelete("{productId:guid}")]
+    [Authorize(Roles = "Author")]
+    public async Task<ActionResult> UnlistProduct([FromRoute] Guid productId)
+    {
+        var userId = new Guid(User.FindFirstValue("UserId")!);
+        await productService.UnlistProductAsync(productId, userId);
+        return Ok();
+    }
+
+    [HttpGet("favorites")]
+    [Authorize]
+    public async Task<ActionResult<ICollection<Guid>>> GetFavoriteIds()
+    {
+        var userId = new Guid(User.FindFirstValue("UserId")!);
+        return Ok(await productService.GetFavoriteIdsAsync(userId));
+    }
 }
