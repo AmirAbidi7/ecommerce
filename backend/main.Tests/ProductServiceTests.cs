@@ -155,4 +155,48 @@ public class ProductServiceTests : TestBase
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => new ProductService(db).UnfavoriteProduct(product.Id, user.Id!.Value));
     }
+
+    [Fact]
+    public async Task GetProducts_ShouldIncludeActiveSale()
+    {
+        using var db = CreateContext();
+        var product = CreateProduct();
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        db.Sales.Add(new Sale
+        {
+            Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 25,
+            StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1),
+            CreatedBy = Guid.NewGuid(), Product = null!
+        });
+        await db.SaveChangesAsync();
+
+        var result = await new ProductService(db).GetProductsAsync();
+
+        var dto = Assert.Single(result);
+        Assert.True(dto.IsOnSale);
+        Assert.Equal(25, dto.SalePercent);
+        Assert.Equal(Pricing.EffectivePrice(product.Price, 25), dto.EffectivePrice);
+    }
+
+    [Fact]
+    public async Task GetProduct_ShouldNotApplyExpiredSale()
+    {
+        using var db = CreateContext();
+        var product = CreateProduct();
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        db.Sales.Add(new Sale
+        {
+            Id = Guid.NewGuid(), ProductId = product.Id, PercentOff = 25,
+            StartsAt = DateTime.UtcNow.AddDays(-2), EndsAt = DateTime.UtcNow.AddDays(-1),
+            CreatedBy = Guid.NewGuid(), Product = null!
+        });
+        await db.SaveChangesAsync();
+
+        var result = await new ProductService(db).GetProductAsync(product.Id);
+
+        Assert.False(result.IsOnSale);
+        Assert.Equal(product.Price, result.EffectivePrice);
+    }
 }

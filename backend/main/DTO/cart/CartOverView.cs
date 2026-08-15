@@ -11,7 +11,7 @@ public record CartOverView(Guid Id, ICollection<CartProduct> Items)
             cartItems
                 .Select(ci => new CartProduct(
                     ci.ProductId,
-                    new ProductOverview(ci.Product),
+                    new ProductOverview(ci.Product, null),
                     ci.ProductAmount
                 ))
                 .ToList()

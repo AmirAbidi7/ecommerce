@@ -1,5 +1,6 @@
 using main.Config;
 using main.DTO.product;
+using main.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace main.Service
@@ -8,13 +9,31 @@ namespace main.Service
     {
         public async Task<ICollection<ProductOverview>> GetProductsAsync()
         {
-            return await db.Products.Select(p => new ProductOverview(p)).ToListAsync();
+            var now = DateTime.UtcNow;
+            var products = await db
+                .Products.Include(p => p.Category)
+                .Where(p => p.IsListed)
+                .ToListAsync();
+            var activeSales = await db
+                .Sales.Where(s =>
+                    s.StartsAt <= now && s.EndsAt >= now && products.Select(p => p.Id).Contains(s.ProductId)
+                )
+                .ToListAsync();
+            return products
+                .Select(p => new ProductOverview(p, activeSales.FirstOrDefault(s => s.ProductId == p.Id)))
+                .ToList();
         }
 
         public async Task<ProdutDetails> GetProductAsync(Guid productId)
         {
-            var product = await db.Products.FirstAsync(p => p.Id == productId);
-            return new ProdutDetails(product);
+            var product = await db
+                .Products.Include(p => p.Category)
+                .FirstAsync(p => p.Id == productId);
+            var now = DateTime.UtcNow;
+            var activeSale = await db.Sales.FirstOrDefaultAsync(s =>
+                s.ProductId == productId && s.StartsAt <= now && s.EndsAt >= now
+            );
+            return new ProdutDetails(product, activeSale);
         }
 
         public async Task FavoriteProduct(Guid productId, Guid userId)
