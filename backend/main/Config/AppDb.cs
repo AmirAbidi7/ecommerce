@@ -13,6 +13,9 @@ namespace main.Config
 
         public DbSet<CartItem> CartItems { get; set; }
 
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Sale> Sales { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder
@@ -43,6 +46,25 @@ namespace main.Config
                 .HasMany(cart => cart.Products)
                 .WithMany()
                 .UsingEntity<CartItem>();
+
+            modelBuilder
+                .Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder
+                .Entity<Product>()
+                .HasOne(p => p.Author)
+                .WithMany(u => u.Products)
+                .HasForeignKey(p => p.AuthorId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder
+                .Entity<Sale>()
+                .HasOne(s => s.Product)
+                .WithMany()
+                .HasForeignKey(s => s.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

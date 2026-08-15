@@ -14,5 +14,7 @@ namespace main.Entity
         public ICollection<Product>? FavoriteProducts { get; set; }
 
         public ICollection<Cart>? Carts { get; set; }
+
+        public ICollection<Product>? Products { get; set; }
     }
 }
