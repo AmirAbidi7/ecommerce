@@ -14,6 +14,12 @@ export default function Products() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const { token } = useAuth();
 
+  const [prevToken, setPrevToken] = useState(token);
+  if (token !== prevToken) {
+    setPrevToken(token);
+    if (!token) setFavorites(new Set());
+  }
+
   useEffect(() => {
     getProducts().then((res) => {
       if ("error" in res) setError(res.error);
@@ -28,6 +34,15 @@ export default function Products() {
       () => setFavorites(new Set()),
     );
   }, [token]);
+
+  const toggleFavorite = (productId: string, next: boolean) => {
+    setFavorites((prev) => {
+      const set = new Set(prev);
+      if (next) set.add(productId);
+      else set.delete(productId);
+      return set;
+    });
+  };
 
   const categories = useMemo(
     () => [...new Set(products.map((p) => p.CategoryName))].sort(),
@@ -52,7 +67,12 @@ export default function Products() {
       </label>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {visible.map((p) => (
-          <ProductCard key={p.Id} product={p} favorited={favorites.has(p.Id)} />
+          <ProductCard
+            key={p.Id}
+            product={p}
+            favorited={favorites.has(p.Id)}
+            onToggleFavorite={toggleFavorite}
+          />
         ))}
       </div>
     </div>

@@ -21,7 +21,7 @@ function SaleForm({
   const startMs = starts ? Date.parse(starts) : NaN;
   const endMs = ends ? Date.parse(ends) : NaN;
   const missing = !percent || !starts || !ends;
-  const invalid = percentNum < 1 || percentNum > 100;
+  const invalid = !Number.isInteger(percentNum) || percentNum < 1 || percentNum > 100;
   const ordering = starts && ends && endMs <= startMs;
   const formInvalid = missing || invalid || ordering;
 
@@ -246,12 +246,12 @@ export default function MyBooks() {
                     Cancel sale
                   </button>
                 </div>
-              ) : (
+              ) : book.IsListed ? (
                 <SaleForm
                   bookId={book.Id}
                   onDone={() => runAction(book.Id, () => Promise.resolve())}
                 />
-              )}
+              ) : null}
             </li>
           ))}
         </ul>

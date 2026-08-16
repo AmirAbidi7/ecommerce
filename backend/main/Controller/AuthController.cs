@@ -40,7 +40,7 @@ public class AuthController(AuthService authService) : ControllerBase
     [HttpGet]
     public async Task<ActionResult> Logout()
     {
-        Response.Cookies.Delete("refreshToken");
+        Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
         return Ok();
     }
 
@@ -50,6 +50,7 @@ public class AuthController(AuthService authService) : ControllerBase
         {
             HttpOnly = true,
             SameSite = SameSiteMode.None,
+            Secure = true,
             Expires = DateTime.UtcNow.AddDays(7),
             Path = "/api/auth/refresh",
         };

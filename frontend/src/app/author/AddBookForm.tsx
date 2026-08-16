@@ -13,6 +13,12 @@ const emptyForm: CreateProductRequest = {
   CategoryName: "",
 };
 
+const numberField = (key: "Price" | "Stock", value: string) => {
+  const parsed = Number(value);
+  if (value.trim() === "" || Number.isNaN(parsed)) return null;
+  return parsed;
+};
+
 export default function AddBookForm({ onCreated }: { onCreated: () => void }) {
   const [form, setForm] = useState<CreateProductRequest>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
@@ -24,6 +30,16 @@ export default function AddBookForm({ onCreated }: { onCreated: () => void }) {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const price = numberField("Price", String(form.Price));
+    const stock = numberField("Stock", String(form.Stock));
+    if (price === null || price <= 0) {
+      setError("Price must be a positive number");
+      return;
+    }
+    if (stock === null || stock < 0) {
+      setError("Stock must be zero or a positive number");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -32,8 +48,8 @@ export default function AddBookForm({ onCreated }: { onCreated: () => void }) {
         body: {
           ...form,
           Name: form.Name.trim(),
-          Price: Number(form.Price),
-          Stock: Number(form.Stock),
+          Price: price,
+          Stock: stock,
           ImageUrl: form.ImageUrl.trim(),
           Description: form.Description.trim(),
           CategoryName: form.CategoryName.trim(),

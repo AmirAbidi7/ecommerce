@@ -5,7 +5,15 @@ import { api } from "../../../api";
 import { useAuth } from "../../../auth/AuthContext";
 import { useRouter } from "next/navigation";
 
-export default function FavoriteButton({ productId, initial }: { productId: string; initial: boolean }) {
+export default function FavoriteButton({
+  productId,
+  initial,
+  onToggle,
+}: {
+  productId: string;
+  initial: boolean;
+  onToggle: (favorite: boolean) => void;
+}) {
   const { token } = useAuth();
   const router = useRouter();
   const [favorite, setFavorite] = useState(initial);
@@ -17,12 +25,16 @@ export default function FavoriteButton({ productId, initial }: { productId: stri
       return;
     }
     setBusy(true);
+    const next = !favorite;
+    setFavorite(next);
     try {
-      setFavorite((f) => !f);
       await api<void>(favorite ? "/api/product/unfavorite" : "/api/product/favorite", {
         method: "PUT",
         body: productId,
       });
+      onToggle(next);
+    } catch {
+      setFavorite(favorite);
     } finally {
       setBusy(false);
     }
